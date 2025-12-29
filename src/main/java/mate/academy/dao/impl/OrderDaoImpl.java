@@ -1,6 +1,9 @@
 package mate.academy.dao.impl;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Root;
 import java.util.List;
 import mate.academy.dao.OrderDao;
 import mate.academy.exception.DataProcessingException;
@@ -10,7 +13,6 @@ import mate.academy.model.User;
 import mate.academy.util.HibernateUtil;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
-import org.hibernate.query.Query;
 
 @Dao
 public class OrderDaoImpl implements OrderDao {
@@ -37,24 +39,14 @@ public class OrderDaoImpl implements OrderDao {
     }
 
     @Override
-    public Order getByUser(User user) {
+    public List<Order> getByUser(User user) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            Query<Order> query = session.createQuery(
-                    "FROM Order o WHERE o.user =:user", Order.class);
-            query.setParameter("user", user);
-            return query.uniqueResult();
-        } catch (Exception e) {
-            throw new DataProcessingException(
-                    "Can't find an order by user: " + user, e);
-        }
-    }
-
-    @Override
-    public List<Order> getAll() {
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            CriteriaBuilder cb = session.getCriteriaBuilder();
             CriteriaQuery<Order> criteriaQuery = session.getCriteriaBuilder()
                     .createQuery(Order.class);
-            criteriaQuery.from(Order.class);
+            Root<Order> root = criteriaQuery.from(Order.class);
+            root.fetch("tickets", JoinType.LEFT);
+            criteriaQuery.select(root).where(cb.equal(root.get("user"), user));
             return session.createQuery(criteriaQuery).getResultList();
         } catch (Exception e) {
             throw new DataProcessingException("Can't get all orders", e);

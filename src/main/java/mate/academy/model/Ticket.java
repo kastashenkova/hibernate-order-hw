@@ -22,7 +22,7 @@ public class Ticket {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private Order orders;
+    private Order order;
 
     public Long getId() {
         return id;
