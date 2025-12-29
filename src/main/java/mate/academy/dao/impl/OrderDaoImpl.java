@@ -46,10 +46,13 @@ public class OrderDaoImpl implements OrderDao {
                     .createQuery(Order.class);
             Root<Order> root = criteriaQuery.from(Order.class);
             root.fetch("tickets", JoinType.LEFT);
-            criteriaQuery.select(root).where(cb.equal(root.get("user"), user));
+            criteriaQuery.select(root)
+                    .where(cb.equal(root.get("user"), user))
+                    .distinct(true);
             return session.createQuery(criteriaQuery).getResultList();
         } catch (Exception e) {
-            throw new DataProcessingException("Can't get all orders", e);
+            throw new DataProcessingException(
+                    "Can't get orders for user: " + user, e);
         }
     }
 }
